@@ -1,0 +1,15 @@
+Experiment,Features,Params,MAE,RMSE,R2
+Baseline: repeat last hour,lag_1,-,596.553,834.745,0.822
+Baseline: same hour last week,lag_168,-,301.812,563.411,0.919
+Ridge: calendar + lags,10 cols,alpha=1,305.096,444.005,0.95
+RF: calendar only,7 cols,100 trees,258.748,387.944,0.962
+RF: calendar + lags + MAs,12 cols,100 trees,161.175,254.155,0.984
+RF: all features,26 cols,100 trees,161.145,254.105,0.984
+HGB: all features (tuning),26 cols,"lr=0.05, depth=4, iters=200",173.598,263.754,0.982
+HGB: all features (tuning),26 cols,"lr=0.05, depth=4, iters=500",161.157,248.172,0.984
+HGB: all features (tuning),26 cols,"lr=0.05, depth=8, iters=200",158.466,245.14,0.985
+HGB: all features (tuning),26 cols,"lr=0.05, depth=8, iters=500",155.946,242.687,0.985
+HGB: all features (tuning),26 cols,"lr=0.1, depth=4, iters=200",164.371,251.936,0.984
+HGB: all features (tuning),26 cols,"lr=0.1, depth=4, iters=500",160.561,247.349,0.984
+HGB: all features (tuning),26 cols,"lr=0.1, depth=8, iters=200",155.663,243.144,0.985
+HGB: all features (tuning),26 cols,"lr=0.1, depth=8, iters=500",155.623,243.123,0.985
