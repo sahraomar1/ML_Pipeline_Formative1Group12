@@ -1,0 +1,28 @@
+[
+  {
+    "timestamp": "2017-06-01T07:00:00",
+    "traffic_volume": 6533,
+    "weather": {
+      "main": "Clear",
+      "description": "sky is clear",
+      "temp_c": 7.6,
+      "rain_1h": 0.0,
+      "snow_1h": 0.0,
+      "clouds_all": 1.0
+    },
+    "holiday": null
+  },
+  {
+    "timestamp": "2012-12-25T00:00:00",
+    "traffic_volume": 803,
+    "weather": {
+      "main": "Clouds",
+      "description": "overcast clouds",
+      "temp_c": -8.75,
+      "rain_1h": 0.0,
+      "snow_1h": 0.0,
+      "clouds_all": 90.0
+    },
+    "holiday": "Christmas Day"
+  }
+]
