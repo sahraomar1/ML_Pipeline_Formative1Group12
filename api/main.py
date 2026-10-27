@@ -119,6 +119,41 @@ def list_mysql_records():
         raise HTTPException(500, "MySQL read failed") from exc
 
 
+@app.get("/mysql/records/latest")
+def latest_mysql_record():
+    sql = text(f"SELECT {MYSQL_COLUMNS} FROM traffic_records ORDER BY record_time DESC LIMIT 1")
+    try:
+        with mysql_engine.connect() as conn:
+            row = conn.execute(sql).mappings().first()
+        if row is None:
+            raise HTTPException(404, "No records found")
+        return dict(row)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(500, "MySQL query failed") from exc
+
+
+@app.get("/mysql/records/range")
+def mysql_records_by_range(start_date: str, end_date: str):
+    start = parse_date(start_date)
+    end = parse_date(end_date, end_of_day=True)
+    if start > end:
+        raise HTTPException(400, "Start date must not exceed end date")
+    sql = text(f"""
+        SELECT {MYSQL_COLUMNS}
+        FROM traffic_records
+        WHERE record_time >= :start AND record_time <= :end
+        ORDER BY record_time ASC
+    """)
+    try:
+        with mysql_engine.connect() as conn:
+            rows = conn.execute(sql, {"start": start, "end": end}).mappings().all()
+        return [dict(row) for row in rows]
+    except Exception as exc:
+        raise HTTPException(500, "MySQL query failed") from exc
+
+
 @app.get("/mysql/records/{record_id}")
 def get_mysql_record(record_id: int):
     sql = text(f"SELECT {MYSQL_COLUMNS} FROM traffic_records WHERE record_id = :id")
