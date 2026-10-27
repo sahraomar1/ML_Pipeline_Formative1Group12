@@ -204,3 +204,100 @@ def delete_mysql_record(record_id: int):
         raise
     except Exception as exc:
         raise HTTPException(500, "MySQL delete failed") from exc
+
+
+# =====================================================================
+# MongoDB CRUD + time-series  (collection: traffic_readings)
+# =====================================================================
+@app.post("/mongodb/records", status_code=201)
+def create_mongo_record(record: MongoRecordIn):
+    try:
+        result = mongo_collection.insert_one(record.model_dump())
+        return {"message": "Record created", "id": str(result.inserted_id)}
+    except Exception as exc:
+        raise HTTPException(500, "MongoDB insert failed") from exc
+
+
+@app.get("/mongodb/records")
+def list_mongo_records():
+    try:
+        docs = mongo_collection.find().sort("timestamp", -1)
+        return [mongo_out(doc) for doc in docs]
+    except Exception as exc:
+        raise HTTPException(500, "MongoDB read failed") from exc
+
+
+@app.get("/mongodb/records/latest")
+def latest_mongo_record():
+    try:
+        doc = mongo_collection.find_one({}, sort=[("timestamp", -1), ("_id", -1)])
+        if doc is None:
+            raise HTTPException(404, "No records found")
+        return mongo_out(doc)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(500, "MongoDB query failed") from exc
+
+
+@app.get("/mongodb/records/range")
+def mongo_records_by_range(start_date: str, end_date: str):
+    start = parse_date(start_date)
+    end = parse_date(end_date, end_of_day=True)
+    if start > end:
+        raise HTTPException(400, "Start date must not exceed end date")
+    try:
+        docs = mongo_collection.find(
+            {"timestamp": {"$gte": start, "$lte": end}}
+        ).sort("timestamp", 1)
+        return [mongo_out(doc) for doc in docs]
+    except Exception as exc:
+        raise HTTPException(500, "MongoDB query failed") from exc
+
+
+@app.get("/mongodb/records/{record_id}")
+def get_mongo_record(record_id: str):
+    if not ObjectId.is_valid(record_id):
+        raise HTTPException(400, "Invalid MongoDB record ID")
+    try:
+        doc = mongo_collection.find_one({"_id": ObjectId(record_id)})
+        if doc is None:
+            raise HTTPException(404, "Record not found")
+        return mongo_out(doc)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(500, "MongoDB read failed") from exc
+
+
+@app.put("/mongodb/records/{record_id}")
+def update_mongo_record(record_id: str, record: MongoRecordIn):
+    if not ObjectId.is_valid(record_id):
+        raise HTTPException(400, "Invalid MongoDB record ID")
+    try:
+        result = mongo_collection.update_one(
+            {"_id": ObjectId(record_id)},
+            {"$set": record.model_dump()},
+        )
+        if result.matched_count == 0:
+            raise HTTPException(404, "Record not found")
+        return {"message": "Record updated", "id": record_id}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(500, "MongoDB update failed") from exc
+
+
+@app.delete("/mongodb/records/{record_id}")
+def delete_mongo_record(record_id: str):
+    if not ObjectId.is_valid(record_id):
+        raise HTTPException(400, "Invalid MongoDB record ID")
+    try:
+        result = mongo_collection.delete_one({"_id": ObjectId(record_id)})
+        if result.deleted_count == 0:
+            raise HTTPException(404, "Record not found")
+        return {"message": "Record deleted", "id": record_id}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(500, "MongoDB delete failed") from exc
