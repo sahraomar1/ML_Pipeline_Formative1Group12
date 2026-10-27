@@ -79,3 +79,93 @@ def mongo_out(doc: dict) -> dict:
     doc = dict(doc)
     doc["id"] = str(doc.pop("_id"))
     return doc
+
+
+# =====================================================================
+# MySQL CRUD  (table: traffic_records, PK: record_id, order: record_time)
+# =====================================================================
+MYSQL_COLUMNS = (
+    "record_id, record_time, traffic_volume, temp_c, rain_1h, "
+    "snow_1h, clouds_all, weather_id, holiday_id"
+)
+
+
+@app.post("/mysql/records", status_code=201)
+def create_mysql_record(record: TrafficRecordIn):
+    sql = text(f"""
+        INSERT INTO traffic_records
+            (record_time, traffic_volume, temp_c, rain_1h, snow_1h,
+             clouds_all, weather_id, holiday_id)
+        VALUES (:record_time, :traffic_volume, :temp_c, :rain_1h, :snow_1h,
+                :clouds_all, :weather_id, :holiday_id)
+    """)
+    try:
+        with mysql_engine.begin() as conn:
+            result = conn.execute(sql, record.model_dump())
+            new_id = result.lastrowid
+        return {"message": "Record created", "record_id": new_id}
+    except Exception as exc:
+        raise HTTPException(500, "MySQL insert failed") from exc
+
+
+@app.get("/mysql/records")
+def list_mysql_records():
+    sql = text(f"SELECT {MYSQL_COLUMNS} FROM traffic_records ORDER BY record_time DESC")
+    try:
+        with mysql_engine.connect() as conn:
+            rows = conn.execute(sql).mappings().all()
+        return [dict(row) for row in rows]
+    except Exception as exc:
+        raise HTTPException(500, "MySQL read failed") from exc
+
+
+@app.get("/mysql/records/{record_id}")
+def get_mysql_record(record_id: int):
+    sql = text(f"SELECT {MYSQL_COLUMNS} FROM traffic_records WHERE record_id = :id")
+    try:
+        with mysql_engine.connect() as conn:
+            row = conn.execute(sql, {"id": record_id}).mappings().first()
+        if row is None:
+            raise HTTPException(404, "Record not found")
+        return dict(row)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(500, "MySQL read failed") from exc
+
+
+@app.put("/mysql/records/{record_id}")
+def update_mysql_record(record_id: int, record: TrafficRecordIn):
+    sql = text("""
+        UPDATE traffic_records
+        SET record_time = :record_time, traffic_volume = :traffic_volume,
+            temp_c = :temp_c, rain_1h = :rain_1h, snow_1h = :snow_1h,
+            clouds_all = :clouds_all, weather_id = :weather_id,
+            holiday_id = :holiday_id
+        WHERE record_id = :record_id
+    """)
+    try:
+        with mysql_engine.begin() as conn:
+            result = conn.execute(sql, {**record.model_dump(), "record_id": record_id})
+        if result.rowcount == 0:
+            raise HTTPException(404, "Record not found")
+        return {"message": "Record updated", "record_id": record_id}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(500, "MySQL update failed") from exc
+
+
+@app.delete("/mysql/records/{record_id}")
+def delete_mysql_record(record_id: int):
+    sql = text("DELETE FROM traffic_records WHERE record_id = :id")
+    try:
+        with mysql_engine.begin() as conn:
+            result = conn.execute(sql, {"id": record_id})
+        if result.rowcount == 0:
+            raise HTTPException(404, "Record not found")
+        return {"message": "Record deleted", "record_id": record_id}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(500, "MySQL delete failed") from exc
