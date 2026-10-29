@@ -36,3 +36,20 @@ To be filled in after running the endpoints against the group's live MySQL/Mongo
 
 ### Limitations
 This implementation assumes the Task 2 schema exactly as defined in `database/schema.sql` and `database/load_mongo.py`. Behaviour depends on both databases being reachable and populated, and MongoDB storing `timestamp` as a BSON date (already handled by `load_mongo.py`).
+
+## Task 4: Prediction Script
+
+`scripts/predict.py` fetches recent hourly records from the API, preprocesses
+them with the same feature pipeline as Task 1 (`src/features.py`), loads the
+trained model (`models/traffic_model_hgb_12.joblib`) and forecasts the next
+hour(s) of traffic volume. It needs about 8 days of history because the model
+uses lag and rolling-window features.
+
+### How to run
+1. Start MySQL, load the data (`database/schema.sql`, then
+   `python database/load_mysql.py`) and set `MYSQL_PASSWORD` as an environment
+   variable.
+2. Terminal 1: `uvicorn api.main:app --reload`
+3. Terminal 2: `python scripts/predict.py`
+
+Optional flags: `--api-url`, `--db mysql|mongodb`, `--hours N`.
