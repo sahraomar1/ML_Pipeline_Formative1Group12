@@ -1,6 +1,4 @@
-   data/
-   __pycache__/
-   .env
-   .venv/.venv/
+data/
 __pycache__/
 .env
+.venv/
