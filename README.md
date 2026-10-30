@@ -42,6 +42,42 @@ Run all commands from the main project folder.
 
 ## Task 1: Preprocessing, analysis and model
 
+Dataset: Metro Interstate Traffic Volume (I-94, Minneapolis-St. Paul). It has 48,204 original records and 9 columns, with hourly data from 2 Oct 2012 to 30 Sep 2018. The target is traffic_volume (vehicles per hour).
+
+Preprocessing (Task 1A)
+
+7,629 repeated timestamps were combined into one row per hour.
+A complete hourly timeline was created (52,551 hours). 11,976 hours (22.8%) were missing. Gaps of up to 6 hours were interpolated, and 8,928 hours in 76 longer gaps were left missing.
+Invalid values were set to missing: a temperature of 0 K, an extreme rainfall value (about 9,831 mm), and 32 near-zero traffic hours on 23-24 July 2016 (suspected sensor or road-closure problem).
+Temperature was converted from Kelvin to Celsius, and the holiday flags were rebuilt for the full holiday date.
+
+Analytical questions (Task 1B)
+
+Five questions were answered, each with visualizations and an interpretation:
+
+Is there a long-term trend in traffic volume?
+Are there daily and weekly patterns?
+How do holidays affect traffic?
+Are there lag effects (1, 24 and 168 hours earlier)?
+Do moving averages show trends or unusual days?
+
+Model (Task 1C)
+
+The model predicts the traffic volume one hour ahead. The features are calendar information, previous traffic volumes (lags of 1, 24 and 168 hours), and shifted 24-hour and 7-day moving averages. The data was split by time: training up to December 2016, validation in 2017, and testing in 2018. A baseline, Ridge, Random Forest and HistGradientBoosting were compared, and hyperparameter experiments were run on HistGradientBoosting.
+
+Experiment (validation)	MAE	RMSE	R²
+Baseline: same hour last week	301.8	563.4	0.919
+Ridge: calendar + lags	305.1	444.0	0.950
+Random Forest: calendar + lags + moving averages	161.2	254.2	0.984
+HistGradientBoosting (best settings)	155.6	243.1	0.985
+
+The best settings were a learning rate of 0.1, a maximum depth of 8 and 500 iterations. The final model was trained on the training and validation data and tested on 2018: MAE 144.5, RMSE 223.7, R² 0.987. Lags and moving averages improved the predictions a lot, while the weather variables added very little. The full experiment table is in the notebook.
+
+How to run the notebook
+
+Download the Metro Interstate Traffic Volume CSV and upload traffic_volume_task1.ipynb to Google Colab.
+Put the CSV in MyDrive/traffic_project/data/raw/ in Google Drive.
+Run the cells in order, starting from the setup section. The notebook saves the processed data, figures and model.
 
 ## Task 2: Databases (MySQL and MongoDB)
 
