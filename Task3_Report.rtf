@@ -1,0 +1,92 @@
+{\rtf1\ansi\ansicpg1252\deff0\nouicompat{\fonttbl{\f0\fswiss\fcharset0 Calibri;}{\f1\fmodern\fcharset0 Consolas;}}
+{\colortbl;\red0\green0\blue0;\red31\green56\blue100;}
+\viewkind4\uc1
+\pard\sa200\sl276\slmult1\qc\b\fs40\cf2 Task 3: CRUD API and Time-Series Queries\par
+\fs24\b0\cf1 Metro Interstate Traffic Volume \emdash  ML Pipeline Formative 1, Group 12\par
+\pard\sa200\sl276\slmult1\par
+
+\pard\sa200\sl276\slmult1\b\fs32\cf2 1. Objective\par
+\b0\fs22\cf1 The objective of Task 3 was to build an API that allows a client to create, retrieve, update, and delete traffic records, as well as retrieve the latest record and records within a specified date range, for both of the databases implemented in Task 2: MySQL and MongoDB.\par
+
+\b\fs32\cf2 2. Technology Stack\par
+\b0\fs22\cf1
+\pard{\pntext\f0 \'b7\tab}{\*\pn\pnlvlblt\pnf0\pnindent0{\pntxtb\'b7}}\fi-360\li720 Python 3\par
+{\pntext\f0 \'b7\tab}FastAPI \emdash  web framework used to build and expose the REST API\par
+{\pntext\f0 \'b7\tab}Uvicorn \emdash  ASGI server used to run the FastAPI application\par
+{\pntext\f0 \'b7\tab}SQLAlchemy and PyMySQL \emdash  used to connect to and query the MySQL database\par
+{\pntext\f0 \'b7\tab}PyMongo \emdash  used to connect to and query the MongoDB database\par
+{\pntext\f0 \'b7\tab}Pydantic \emdash  used to validate request bodies for both databases\par
+\pard\sa200\sl276\slmult1\par
+
+\b\fs32\cf2 3. Reused Task 2 Schema\par
+\b0\fs22\cf1 No new schema or collection was created for Task 3. The API reuses exactly what Task 2 built:\par
+\pard{\pntext\f0 \'b7\tab}\fi-360\li720\b MySQL database:\b0  \f1 traffic_db\f0 , with tables \f1 traffic_records\f0  (primary key \f1 record_id\f0 , ordering column \f1 record_time\f0 , foreign keys \f1 weather_id\f0  and \f1 holiday_id\f0 ), \f1 weather_types\f0 , and \f1 holidays\f0 .\par
+{\pntext\f0 \'b7\tab}\b MongoDB database:\b0  \f1 traffic_db\f0 , collection \f1 traffic_readings\f0 , with documents containing \f1 timestamp\f0 , \f1 traffic_volume\f0 , a nested \f1 weather\f0  object (main, description, temp_c, rain_1h, snow_1h, clouds_all), and an optional \f1 holiday\f0  field.\par
+{\pntext\f0 \'b7\tab}\b Connection settings:\b0  reused from \f1 database/config.py\f0 , which reads MySQL and MongoDB connection details from environment variables with sensible local defaults.\par
+\pard\sa200\sl276\slmult1\par
+
+\b\fs32\cf2 4. Project Structure\par
+\b0\fs22\cf1 The API code was added under a new \f1 api/\f0  folder so it sits alongside the existing \f1 database/\f0  folder from Task 2:\par
+\pard\li360\f1\fs20 api/\par
+\tab __init__.py\par
+\tab main.py            (FastAPI app: CRUD + time-series endpoints)\par
+\tab requirements.txt   (fastapi, uvicorn, sqlalchemy, pymysql, pymongo, python-dotenv)\par
+.env.example            (template connection variables, real .env is git-ignored)\par
+\pard\sa200\sl276\slmult1\f0\fs22\par
+
+\b\fs32\cf2 5. Endpoints Implemented\par
+\b0\fs22\cf1 The following 14 endpoints were implemented, 7 for each database:\par
+\pard\sa200\sl276\slmult1\par
+\trowd\trgaph108\trleft-108\trbrdrt\brdrs\brdrw10\trbrdrl\brdrs\brdrw10\trbrdrb\brdrs\brdrw10\trbrdrr\brdrs\brdrw10
+\cellx1300\cellx4300\cellx7300\cellx10300
+\intbl\b Method\cell MySQL\cell MongoDB\cell Purpose\cell\row
+\intbl\b0 POST\cell /mysql/records\cell /mongodb/records\cell Create a record\cell\row
+\intbl GET\cell /mysql/records\cell /mongodb/records\cell Retrieve all records (newest first)\cell\row
+\intbl GET\cell /mysql/records/{id}\cell /mongodb/records/{id}\cell Retrieve one record by its id\cell\row
+\intbl PUT\cell /mysql/records/{id}\cell /mongodb/records/{id}\cell Update a record\cell\row
+\intbl DELETE\cell /mysql/records/{id}\cell /mongodb/records/{id}\cell Delete a record\cell\row
+\intbl GET\cell /mysql/records/latest\cell /mongodb/records/latest\cell Retrieve the most recent record\cell\row
+\intbl GET\cell /mysql/records/range\cell /mongodb/records/range\cell Retrieve records within a date range\cell\row
+\pard\sa200\sl276\slmult1\par
+\b0\fs22\cf1 MySQL records are identified by the auto-increment integer \f1 record_id\f0 . MongoDB records are identified by their native \f1 ObjectId\f0 , which is accepted and returned as a string \f1 id\f0  field.\par
+
+\b\fs32\cf2 6. Implementation Details\par
+\b0\fs22\cf1
+\pard{\pntext\f0 \'b7\tab}{\*\pn\pnlvlblt\pnf0\pnindent0{\pntxtb\'b7}}\fi-360\li720\b Validation:\b0  Pydantic models (\f1 TrafficRecordIn\f0  for MySQL, \f1 MongoRecordIn\f0  with a nested \f1 WeatherInfo\f0  model for MongoDB) validate request bodies before they reach the database layer.\par
+{\pntext\f0 \'b7\tab}\b MySQL access:\b0  SQLAlchemy \f1 create_engine\f0  with parameterised, raw SQL (\f1 text()\f0 ) for insert, select, update, and delete, run through connections opened from a connection pool (\f1 pool_pre_ping=True\f0 ).\par
+{\pntext\f0 \'b7\tab}\b MongoDB access:\b0  a single PyMongo \f1 MongoClient\f0  connected to the \f1 traffic_readings\f0  collection; create/read/update/delete map directly to \f1 insert_one\f0 , \f1 find\f0 /\f1 find_one\f0 , \f1 update_one\f0 , and \f1 delete_one\f0 .\par
+{\pntext\f0 \'b7\tab}\b Error handling:\b0  every endpoint wraps its database call in a try/except block, returning HTTP 404 when a record is not found, 400 for invalid input (bad MongoDB id, invalid date, start date after end date), and 500 for unexpected database errors.\par
+{\pntext\f0 \'b7\tab}\b Route ordering:\b0  the \f1 /latest\f0  and \f1 /range\f0  routes are declared before the \f1 /{id}\f0  route for each database so FastAPI does not mistake the literal words "latest" or "range" for a record id.\par
+\pard\sa200\sl276\slmult1\par
+
+\b\fs32\cf2 7. Time-Series Queries\par
+\b0\fs22\cf1
+\pard{\pntext\f0 \'b7\tab}{\*\pn\pnlvlblt\pnf0\pnindent0{\pntxtb\'b7}}\fi-360\li720\b Latest record:\b0  MySQL orders by \f1 record_time DESC\f0  with \f1 LIMIT 1\f0 ; MongoDB sorts by \f1 timestamp\f0  descending (with \f1 _id\f0  descending as a tie-breaker) and takes the first document.\par
+{\pntext\f0 \'b7\tab}\b Date range:\b0  both \f1 /range\f0  endpoints accept \f1 start_date\f0  and \f1 end_date\f0  query parameters in \f1 YYYY-MM-DD\f0  format. The start date is treated as midnight and the end date as 23:59:59.999999, so the full end day is included. Invalid dates or a start date after the end date return HTTP 400.\par
+\pard\sa200\sl276\slmult1\par
+
+\b\fs32\cf2 8. How to Run the API\par
+\b0\fs22\cf1
+\pard{\pntext\f0 \'b7\tab}{\*\pn\pnlvlfybullet\pnf0\pnindent0{\pntxtf0\'b7}}\fi-360\li720 1. Install dependencies: \f1 pip install -r api/requirements.txt\f0\par
+{\pntext\f0 \'b7\tab}2. Copy \f1 .env.example\f0  to \f1 .env\f0  and fill in the real MySQL/MongoDB connection details (the real \f1 .env\f0  is never committed).\par
+{\pntext\f0 \'b7\tab}3. From the repository root, run: \f1 uvicorn api.main:app --reload\f0\par
+{\pntext\f0 \'b7\tab}4. Open \f1 http://127.0.0.1:8000/docs\f0  to interact with and test every endpoint through FastAPI's interactive documentation.\par
+\pard\sa200\sl276\slmult1\par
+
+\b\fs32\cf2 9. Testing\par
+\b0\fs22\cf1 The application code was verified to be correct and runnable: it compiles without errors, imports successfully, and registers all 14 CRUD and time-series routes (plus FastAPI's built-in documentation routes) when the module is loaded. This confirms the routing, request validation, and database query logic are structurally sound.\par
+\par
+\cf2\i Live end-to-end testing against the group's running MySQL and MongoDB instances (capturing create, read, update, delete, latest, and range responses through \f1 /docs\f0 ) is still to be completed and documented here with real output, since this was produced in an environment without direct access to the group's live database servers. This section should be completed with actual request/response evidence before final submission.\i0\cf1\par
+\pard\sa200\sl276\slmult1\par
+
+\b\fs32\cf2 10. Limitations\par
+\b0\fs22\cf1
+\pard{\pntext\f0 \'b7\tab}{\*\pn\pnlvlblt\pnf0\pnindent0{\pntxtb\'b7}}\fi-360\li720 The API assumes the Task 2 schema exactly as defined in \f1 database/schema.sql\f0  and \f1 database/load_mongo.py\f0 ; it does not create or modify that schema.\par
+{\pntext\f0 \'b7\tab}MongoDB's \f1 timestamp\f0  field must be stored as a BSON date, not a string, for the \f1 /range\f0  and \f1 /latest\f0  queries to work correctly; this is already handled by the existing \f1 load_mongo.py\f0  loader.\par
+{\pntext\f0 \'b7\tab}The API assumes naive, consistent-timezone datetimes, matching the rest of the Task 2 pipeline.\par
+{\pntext\f0 \'b7\tab}Credentials are supplied only through environment variables / the \f1 .env\f0  file, which is excluded from version control.\par
+\pard\sa200\sl276\slmult1\par
+
+\b\fs32\cf2 11. Conclusion\par
+\b0\fs22\cf1 Task 3 delivers a complete FastAPI application exposing full CRUD operations and time-series queries (latest record and date-range filtering) for both the MySQL and MongoDB databases built in Task 2, reusing their existing schema and connection configuration without modification. The code has been committed to the group's GitHub repository on the \f1 task3\f0  branch in six incremental commits covering project setup, the shared app skeleton, MySQL CRUD, MySQL time-series queries, MongoDB CRUD and time-series queries, and documentation.\par
+}
