@@ -31,7 +31,21 @@ MySQL uses the auto-increment `record_id`. MongoDB uses its native `ObjectId`, r
 4. Open `http://127.0.0.1:8000/docs` to inspect and test the API interactively.
 
 ### Testing
-To be filled in after running the endpoints against the group's live MySQL/MongoDB instances: record create/read/update/delete results plus `latest` and `range` responses for both databases.
+All 14 endpoints were tested end-to-end against live local MySQL 8.4 and MongoDB instances (schema from `database/schema.sql`, one seeded `weather_types` row). A test record was created, read, updated, read again to confirm the update, queried via `latest` and `range`, deleted, then re-read to confirm the delete.
+
+| Test | MySQL | MongoDB |
+| ---- | ----- | ------- |
+| Create (POST)            | 201, `record_id: 1` | 201, `id: 6ae4ebaf70b1aa6062e771d7` |
+| Read all (GET)           | 200, new record present | 200, new document present |
+| Read one (GET /{id})     | 200, `traffic_volume: 4200` | 200, `traffic_volume: 4200` |
+| Update (PUT)             | 200, "Record updated" | 200, "Record updated" |
+| Read after update        | 200, `traffic_volume: 5000` | 200, `traffic_volume: 5000` |
+| Latest (GET)             | 200, returns the updated record | 200, returns the updated record |
+| Range (GET, Jan 2026)    | 200, record included | 200, record included |
+| Delete (DELETE)          | 200, "Record deleted" | 200, "Record deleted" |
+| Read after delete        | 404, "Record not found" | 404, "Record not found" |
+
+All CRUD operations and both time-series queries (`latest`, `range`) returned the expected status codes and data for both databases.
 
 ### Limitations
 This implementation assumes the Task 2 schema exactly as defined in `database/schema.sql` and `database/load_mongo.py`. Behaviour depends on both databases being reachable and populated, and MongoDB storing `timestamp` as a BSON date (already handled by `load_mongo.py`).

@@ -74,9 +74,23 @@
 \pard\sa200\sl276\slmult1\par
 
 \b\fs32\cf2 9. Testing\par
-\b0\fs22\cf1 The application code was verified to be correct and runnable: it compiles without errors, imports successfully, and registers all 14 CRUD and time-series routes (plus FastAPI's built-in documentation routes) when the module is loaded. This confirms the routing, request validation, and database query logic are structurally sound.\par
+\b0\fs22\cf1 All 14 endpoints were tested end-to-end against live local MySQL 8.4 and MongoDB instances, running on the Task 2 schema (\f1 database/schema.sql\f0 ), with one seeded \f1 weather_types\f0  row for the foreign key. A test record was created, read, updated, re-read to confirm the update, queried through \f1 latest\f0  and \f1 range\f0 , deleted, and re-read to confirm the delete.\par
 \par
-\cf2\i Live end-to-end testing against the group's running MySQL and MongoDB instances (capturing create, read, update, delete, latest, and range responses through \f1 /docs\f0 ) is still to be completed and documented here with real output, since this was produced in an environment without direct access to the group's live database servers. This section should be completed with actual request/response evidence before final submission.\i0\cf1\par
+\pard\sa200\sl276\slmult1\par
+\trowd\trgaph108\trleft-108\trbrdrt\brdrs\brdrw10\trbrdrl\brdrs\brdrw10\trbrdrb\brdrs\brdrw10\trbrdrr\brdrs\brdrw10
+\cellx2500\cellx6500\cellx10500
+\intbl\b Test\cell MySQL\cell MongoDB\cell\row
+\intbl\b0 Create (POST)\cell 201, record_id: 1\cell 201, id: 6ae4ebaf70b1aa6062e771d7\cell\row
+\intbl Read all (GET)\cell 200, new record present\cell 200, new document present\cell\row
+\intbl Read one (GET /id)\cell 200, traffic_volume: 4200\cell 200, traffic_volume: 4200\cell\row
+\intbl Update (PUT)\cell 200, "Record updated"\cell 200, "Record updated"\cell\row
+\intbl Read after update\cell 200, traffic_volume: 5000\cell 200, traffic_volume: 5000\cell\row
+\intbl Latest (GET)\cell 200, returns updated record\cell 200, returns updated record\cell\row
+\intbl Range (GET, Jan 2026)\cell 200, record included\cell 200, record included\cell\row
+\intbl Delete (DELETE)\cell 200, "Record deleted"\cell 200, "Record deleted"\cell\row
+\intbl Read after delete\cell 404, "Record not found"\cell 404, "Record not found"\cell\row
+\pard\sa200\sl276\slmult1\par
+\b0\fs22\cf1 All CRUD operations and both time-series queries returned the expected status codes and data for both databases, confirming Task 3 is fully functional end to end.\par
 \pard\sa200\sl276\slmult1\par
 
 \b\fs32\cf2 10. Limitations\par
@@ -88,5 +102,5 @@
 \pard\sa200\sl276\slmult1\par
 
 \b\fs32\cf2 11. Conclusion\par
-\b0\fs22\cf1 Task 3 delivers a complete FastAPI application exposing full CRUD operations and time-series queries (latest record and date-range filtering) for both the MySQL and MongoDB databases built in Task 2, reusing their existing schema and connection configuration without modification. The code has been committed to the group's GitHub repository on the \f1 task3\f0  branch in six incremental commits covering project setup, the shared app skeleton, MySQL CRUD, MySQL time-series queries, MongoDB CRUD and time-series queries, and documentation.\par
+\b0\fs22\cf1 Task 3 delivers a complete, tested FastAPI application exposing full CRUD operations and time-series queries (latest record and date-range filtering) for both the MySQL and MongoDB databases built in Task 2, reusing their existing schema and connection configuration without modification. All 14 endpoints were verified end to end against live MySQL and MongoDB instances, with every create, read, update, delete, latest, and range request returning the expected result. The code has been committed to the group's GitHub repository on the \f1 task3\f0  branch in six incremental commits covering project setup, the shared app skeleton, MySQL CRUD, MySQL time-series queries, MongoDB CRUD and time-series queries, and documentation.\par
 }
